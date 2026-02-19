@@ -1,0 +1,33 @@
+name: MoM Funnel Automation
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:       # Also allows manual trigger
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run MoM_Funnel.py
+        env:
+          SWAPNIL_SECRET_KEY: ${{ secrets.SWAPNIL_SECRET_KEY }}
+          USERNAME: ${{ secrets.USERNAME }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          METABASE_URL: ${{ secrets.METABASE_URL }}
+          MOM_FUNNEL_BASE_QUERY: ${{ secrets.MOM_FUNNEL_BASE_QUERY }}
+          MOM_M0_FUNNEL_RFD_QUERY: ${{ secrets.MOM_M0_FUNNEL_RFD_QUERY }}
+          SHEET_ACCESS_KEY: ${{ secrets.SHEET_ACCESS_KEY }}
+        run: python MoM_Funnel.py
