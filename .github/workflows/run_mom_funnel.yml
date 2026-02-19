@@ -28,6 +28,6 @@ jobs:
           SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           METABASE_URL: ${{ secrets.METABASE_URL }}
           MOM_FUNNEL_BASE_QUERY: ${{ secrets.MOM_FUNNEL_BASE_QUERY }}
-          MOM_M0_FUNNEL_RFD_QUERY: ${{ secrets.MOM_FUNNEL_RFD_QUERY }}
+          MOM_FUNNEL_RFD_QUERY: ${{ secrets.MOM_FUNNEL_RFD_QUERY }}
           SHEET_ACCESS_KEY: ${{ secrets.SHEET_ACCESS_KEY }}
         run: python MoM_Funnel.py
