@@ -18,6 +18,7 @@ service_account_json = os.getenv("SERVICE_ACCOUNT_JSON")
 MB_URL = os.getenv("METABASE_URL")
 BASE_QUERY_URL = os.getenv("MOM_FUNNEL_BASE_QUERY")
 RFD_QUERY_URL = os.getenv("MOM_FUNNEL_RFD_QUERY")
+print(f"🔍 RFD URL loaded: {RFD_QUERY_URL}")
 SAK = os.getenv("SHEET_ACCESS_KEY")
 
 if not sec or not service_account_json:
