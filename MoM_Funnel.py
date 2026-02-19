@@ -170,5 +170,3 @@ mins, secs = divmod(elapsed, 60)
 
 print(f"⏱ Total execution time: {int(mins)}m {int(secs)}s")
 print("🎯 MoM Funnel Automation Completed Successfully!")
-
----
