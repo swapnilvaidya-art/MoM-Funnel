@@ -18,7 +18,6 @@ service_account_json = os.getenv("SERVICE_ACCOUNT_JSON")
 MB_URL = os.getenv("METABASE_URL")
 BASE_QUERY_URL = os.getenv("MOM_FUNNEL_BASE_QUERY")
 RFD_QUERY_URL = os.getenv("MOM_FUNNEL_RFD_QUERY")
-print(f"🔍 RFD URL loaded: {RFD_QUERY_URL}")
 SAK = os.getenv("SHEET_ACCESS_KEY")
 
 if not sec or not service_account_json:
@@ -89,7 +88,7 @@ def sanitize_df(df):
     return df
 
 # -------------------- SAFE SHEET UPDATE --------------------
-def safe_update_sheet(worksheet, df, retries=5):
+def safe_update_sheet(worksheet, df, clear_range, retries=5):
     print(f"🔄 Updating worksheet: {worksheet.title}")
 
     for attempt in range(1, retries + 1):
@@ -97,14 +96,14 @@ def safe_update_sheet(worksheet, df, retries=5):
             rows = len(df) + 1
             cols = len(df.columns)
 
-            # Clear the sheet
-            worksheet.clear()
+            # Clear only specified range
+            worksheet.batch_clear([clear_range])
 
             # Prepare values
             header = df.columns.tolist()
             data_rows = df.values.tolist()
 
-            # Sanitize row by row after tolist()
+            # Sanitize after tolist()
             def sanitize_row(row):
                 return [
                     None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v
@@ -131,12 +130,27 @@ def safe_update_sheet(worksheet, df, retries=5):
             else:
                 raise
 
+# -------------------- COLUMN ORDERS --------------------
+BASE_COLS = [
+    'month_bucket', 'sales_user_email', 'prospect_id', 'prospect_email',
+    'lead_created_on', 'assignment_ts', 'enrollment_ts', 'first_touch_ts',
+    'utm_source', 'inbound_source', 'first_touch_channel', 'is_prospect',
+    'is_rejected', 'test_taken', 'session_done', 'rfd', 'total_dials',
+    'total_connects', 'dialled_flag', 'connect_flag', 'true_churn'
+]
+
+RFD_COLS = [
+    'prospect_id', 'prospect_email', 'sales_user_email', 'lead_created_on',
+    'assignment_ts', 'enrollment_ts', 'first_touch_ts', 'utm_source',
+    'inbound_source', 'rfd_cohort_type', 'first_touch_channel'
+]
+
 # -------------------- CONNECT TO SHEET --------------------
 print("🔗 Connecting to Google Sheets...")
 sheet = gc.open_by_key(SAK)
 
-ws_base = sheet.worksheet("Feb Base")
-ws_rfd = sheet.worksheet("RFDs")
+ws_base = sheet.worksheet("Base")
+ws_rfd = sheet.worksheet("RFD")
 
 # -------------------- QUERY 1: BASE QUERY --------------------
 print("📥 Fetching Base Query from Metabase...")
@@ -147,9 +161,15 @@ if df_base.empty:
     print("⚠️ WARNING: Base Query returned empty dataset.")
 else:
     print(f"📊 Base Query rows fetched: {len(df_base)}")
+
+    missing_base = [col for col in BASE_COLS if col not in df_base.columns]
+    if missing_base:
+        raise ValueError(f"❌ Missing columns in Base query: {missing_base}")
+
+    df_base = df_base[BASE_COLS]
     df_base = sanitize_df(df_base)
-    print("⬆️ Updating Feb Base tab...")
-    safe_update_sheet(ws_base, df_base)
+    print("⬆️ Updating Base tab...")
+    safe_update_sheet(ws_base, df_base, "A:U")
 
 # -------------------- QUERY 2: RFD QUERY --------------------
 print("📥 Fetching RFD Query from Metabase...")
@@ -160,9 +180,15 @@ if df_rfd.empty:
     print("⚠️ WARNING: RFD Query returned empty dataset.")
 else:
     print(f"📊 RFD Query rows fetched: {len(df_rfd)}")
+
+    missing_rfd = [col for col in RFD_COLS if col not in df_rfd.columns]
+    if missing_rfd:
+        raise ValueError(f"❌ Missing columns in RFD query: {missing_rfd}")
+
+    df_rfd = df_rfd[RFD_COLS]
     df_rfd = sanitize_df(df_rfd)
-    print("⬆️ Updating RFDs tab...")
-    safe_update_sheet(ws_rfd, df_rfd)
+    print("⬆️ Updating RFD tab...")
+    safe_update_sheet(ws_rfd, df_rfd, "A:K")
 
 # -------------------- TIMER SUMMARY --------------------
 end_time = time.time()
