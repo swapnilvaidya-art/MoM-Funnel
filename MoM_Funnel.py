@@ -105,7 +105,8 @@ def safe_update_sheet(worksheet, df, clear_range, retries=5):
 
             worksheet.update(
                 f"A1:{chr(64 + cols)}{rows}",
-                values
+                values,
+                value_input_option="RAW"
             )
 
             print(f"✅ Sheet updated successfully: {worksheet.title}")
