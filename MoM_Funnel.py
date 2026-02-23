@@ -75,16 +75,9 @@ def fetch_with_retry(url, headers, retries=5):
 # -------------------- SANITIZE DATAFRAME --------------------
 def sanitize_df(df):
     df.replace([np.inf, -np.inf], None, inplace=True)
-
-    def clean_value(x):
-        if x is None:
-            return ""
-        if isinstance(x, float):
-            if math.isnan(x) or math.isinf(x):
-                return ""
-        return x
-
-    df = df.apply(lambda col: col.map(clean_value))
+    df = df.fillna("")
+    df = df.astype(str)
+    df = df.replace("None", "")
     return df
 
 # -------------------- SAFE SHEET UPDATE --------------------
@@ -105,10 +98,7 @@ def safe_update_sheet(worksheet, df, clear_range, retries=5):
 
             # Sanitize after tolist()
             def sanitize_row(row):
-                return [
-                    None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v
-                    for v in row
-                ]
+                return [str(v) if v is not None else "" for v in row]
 
             data_rows = [sanitize_row(row) for row in data_rows]
             values = [header] + data_rows
